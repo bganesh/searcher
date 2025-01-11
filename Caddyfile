@@ -1,0 +1,19 @@
+{
+    auto_https off    # Disable automatic HTTPS
+    http_port 3144   # Set HTTP port explicitly
+}
+:3144 {
+    root * .
+    tls internal # Use Caddy's automatic certificate generation
+    @tmp_classic {
+        path_regexp ^/tmp/classic/(.*)
+    }
+    route {
+        handle @tmp_classic {
+            rewrite * /Text/{re.tmp_classic.1}
+        }
+    }
+    file_server {
+        browse
+    }
+}
