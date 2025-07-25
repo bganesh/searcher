@@ -19,10 +19,10 @@
       }
       const allIndices = await response.json();
       // Filter out system indices (starting with .) and sort
-      indexes = allIndices
+      indexes = ['*', ...allIndices
         .filter(index => !index.index.startsWith('.'))
         .map(index => index.index)
-        .sort();
+        .sort()];
       
       if (indexes.length > 0) {
         selectedIndex = indexes[0];
