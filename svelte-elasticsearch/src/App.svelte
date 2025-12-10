@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
 
   let searchInput = '';
+  let tagsInput = '';
+  let exactTags = false;
   let currentPage = 1;
   let totalPages = 0;
   let results = [];
@@ -18,7 +20,6 @@
         throw new Error('Failed to fetch indices');
       }
       const allIndices = await response.json();
-      // Filter out system indices (starting with .) and sort
       indexes = ['*', ...allIndices
         .filter(index => !index.index.startsWith('.'))
         .map(index => index.index)
@@ -34,8 +35,8 @@
   });
 
   async function performSearch(resetPage = false) {
-    if (!searchInput.trim()) {
-      errorMessage = 'Please enter a search term';
+    if (!searchInput.trim() && !tagsInput.trim()) {
+      errorMessage = 'Please enter a search term or tag';
       return;
     }
 
@@ -45,9 +46,46 @@
     
     isLoading = true;
     errorMessage = '';
-    const searchTerms = parseSearchInput(searchInput);
     
     try {
+      const mustClauses = [];
+      
+      // Handle regular search
+      if (searchInput.trim()) {
+        const searchTerms = parseSearchInput(searchInput);
+        
+        searchTerms.phrases.forEach(phrase => {
+          mustClauses.push({
+            match_phrase: {
+              content: { query: phrase }
+            }
+          });
+        });
+        
+        searchTerms.terms.forEach(term => {
+          mustClauses.push({
+            match: {
+              content: { query: term }
+            }
+          });
+        });
+      }
+      
+      // Handle tags search
+      if (tagsInput.trim()) {
+        const tags = tagsInput.trim().split(/\s+/);
+        const tagField = exactTags ? 'coded_tags' : 'coded_tags_normalized';
+        
+        tags.forEach(tag => {
+          const searchTag = exactTags ? tag : tag.replace(/[+\/]/g, '');
+          mustClauses.push({
+            term: {
+              [tagField]: searchTag
+            }
+          });
+        });
+      }
+      
       const response = await fetch(`http://localhost:9200/${selectedIndex}/_search`, {
         method: 'POST',
         headers: {
@@ -58,22 +96,7 @@
           size: PAGE_SIZE,
           query: {
             bool: {
-              must: [
-                ...searchTerms.phrases.map(phrase => ({
-                  match_phrase: {
-                    content: {
-                      query: phrase,
-                    }
-                  }
-                })),
-                ...searchTerms.terms.map(term => ({
-                  match: {
-                    content: {
-                      query: term,
-                    }
-                  }
-                }))
-              ]
+              must: mustClauses
             }
           },
           highlight: {
@@ -180,11 +203,24 @@
       type="text"
       bind:value={searchInput}
       on:keypress={handleKeyPress}
-      placeholder='Enter search terms (use quotes for phrases, e.g. "exact phrase" keyword1 keyword2)'
+      placeholder='Enter search terms (use quotes for phrases)'
     />
     <button on:click={handleSearch} disabled={isLoading}>
       {isLoading ? 'Searching...' : 'Search'}
     </button>
+  </div>
+
+  <div class="tags-container">
+    <input
+      type="text"
+      bind:value={tagsInput}
+      on:keypress={handleKeyPress}
+      placeholder='Enter tags (space-separated, e.g., PQ/q Pp)'
+    />
+    <label>
+      <input type="checkbox" bind:checked={exactTags} />
+      Exact tags
+    </label>
   </div>
 
   {#if errorMessage}
@@ -241,9 +277,27 @@
   }
 
   .search-container {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .tags-container {
     margin-bottom: 20px;
     display: flex;
     gap: 10px;
+    align-items: center;
+  }
+
+  .tags-container input[type="text"] {
+    flex: 1;
+  }
+
+  .tags-container label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
   }
 
   select {
@@ -251,24 +305,27 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 16px;
-    min-width: 200px;  /* Minimum width to accommodate longer names */
-    max-width: 300px;  /* Maximum width to prevent the dropdown from getting too wide */
-    text-overflow: ellipsis; /* Show ... for truncated text */
+    min-width: 200px;
+    max-width: 300px;
+    text-overflow: ellipsis;
   }
   
-  /* Style for dropdown options to show full text */
   select option {
     min-width: 100%;
-    white-space: normal; /* Allow text wrapping in options */
+    white-space: normal;
     word-wrap: break-word;
   }
 
-  input {
+  input[type="text"] {
     flex: 1;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 16px;
+  }
+
+  input[type="checkbox"] {
+    cursor: pointer;
   }
 
   .error-message {
