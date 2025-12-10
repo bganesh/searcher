@@ -1,7 +1,27 @@
 import os
+import re
 import click
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, BulkIndexError
+
+def extract_coded_tags(text):
+    """Extracts coded tags from text (combinations of b,g,m,f with +,/ and keywords)."""
+    # Pattern for letter combinations with symbols
+    # Matches: pp, Pq, pX+y, P/Q, x+Y/q, etc.
+    pattern = r'\b[mMfFbBgG]+(?:[+/][mMfFbBgG]+)*\b'
+    tags = re.findall(pattern, text)
+    
+    # Add specific keywords
+    keywords = ['nc', 'inc', 'non-cons', 'ncons', 'best', 'beast', 'noncons', 'nonconsensual', 'non-consensual', 'toy', 'dog']
+    for keyword in keywords:
+        if keyword in text.lower():
+            tags.extend(re.findall(r'\b' + keyword + r'\b', text, re.IGNORECASE))
+    
+    return list(set(tags))  # Remove duplicates
+
+def normalize_tag(tag):
+    """Normalizes a tag by removing symbols for fuzzy matching."""
+    return re.sub(r'[+/]', '', tag)
 
 def create_index(es, index_name):
     """Creates an index in Elasticsearch with a mapping for phrase matching."""
@@ -9,11 +29,47 @@ def create_index(es, index_name):
         es.indices.create(
             index=index_name,
             body={
+                "settings": {
+                    "analysis": {
+                        "analyzer": {
+                            "mixed_analyzer": {
+                                "type": "custom",
+                                "tokenizer": "standard",
+                                "filter": ["lowercase"]
+                            },
+                            "exact_analyzer": {
+                                "type": "custom",
+                                "tokenizer": "whitespace",
+                                "filter": []
+                            },
+                            "tag_normalizer": {
+                                "type": "custom",
+                                "tokenizer": "keyword",
+                                "filter": ["lowercase"]
+                            }
+                        }
+                    }
+                },
                 "mappings": {
                     "properties": {
                         "filepath": {"type": "keyword"},
                         "filename": {"type": "keyword"},
-                        "content": {"type": "text"}
+                        "content": {
+                            "type": "text",
+                            "analyzer": "mixed_analyzer",
+                            "fields": {
+                                "exact": {
+                                    "type": "text",
+                                    "analyzer": "exact_analyzer"
+                                }
+                            }
+                        },
+                        "coded_tags": {
+                            "type": "keyword"
+                        },
+                        "coded_tags_normalized": {
+                            "type": "keyword"
+                        }
                     }
                 }
             }
@@ -50,17 +106,21 @@ def index_file(es, index_name, filepath):
 
     chunks = split_text_into_chunks(text)
 
-    actions = [
-        {
+    actions = []
+    for chunk in chunks:
+        tags = extract_coded_tags(chunk)
+        tags_normalized = [normalize_tag(tag) for tag in tags]
+        
+        actions.append({
             "_index": index_name,
             "_source": {
                 "filepath": filepath,
                 "filename": filename,
-                "content": chunk
+                "content": chunk,
+                "coded_tags": tags,
+                "coded_tags_normalized": tags_normalized
             }
-        }
-        for chunk in chunks
-    ]
+        })
 
     try:
         bulk(es, actions)
