@@ -6,7 +6,6 @@ from elasticsearch.helpers import bulk, BulkIndexError
 
 def extract_coded_tags(text):
     """Extracts coded tags from text (combinations of b,g,m,f with +,/ and keywords)."""
-    import re
     # Pattern for letter combinations with symbols
     pattern = r'\b(?![mM]+\b)(?:[mMfFbBgG]{2,}|[mMfFbBgG]+[+/][mMfFbBgG]+(?:[+/][mMfFbBgG]+)*)\b'
     tags = []
