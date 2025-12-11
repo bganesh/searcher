@@ -49,6 +49,7 @@
     
     try {
       const mustClauses = [];
+      const filterClauses = [];
       
       // Handle regular search
       if (searchInput.trim()) {
@@ -71,19 +72,59 @@
         });
       }
       
-      // Handle tags search
+      // Handle tags search using terms_set
       if (tagsInput.trim()) {
-        const tags = tagsInput.trim().split(/\s+/);
+        const tags = tagsInput.trim().split(/,/).map(t => t.trim());
+        console.log(tags);
         const tagField = exactTags ? 'coded_tags' : 'coded_tags_normalized';
         
-        tags.forEach(tag => {
-          const searchTag = exactTags ? tag : tag.replace(/[+\/]/g, '');
-          mustClauses.push({
-            term: {
-              [tagField]: searchTag
+        const searchTags = exactTags 
+          ? tags 
+          : tags.map(tag => tag.replace(/[+\/]/g, ''));
+        
+        filterClauses.push({
+          terms_set: {
+            [tagField]: {
+              terms: searchTags,
+              minimum_should_match_script: {
+                source: "params.num_terms"
+              }
             }
-          });
+          }
         });
+      }
+      
+      const queryBody = {
+        from: (currentPage - 1) * PAGE_SIZE,
+        size: PAGE_SIZE,
+        query: {
+          bool: {}
+        },
+        highlight: {
+          fields: {
+            content: {
+              fragment_size: 150,
+              number_of_fragments: 3,
+              pre_tags: ['<mark>'],
+              post_tags: ['</mark>']
+            }
+          }
+        }
+      };
+
+      // Add must clauses if they exist
+      if (mustClauses.length > 0) {
+        queryBody.query.bool.must = mustClauses;
+      }
+
+      // Add filter clauses if they exist
+      if (filterClauses.length > 0) {
+        queryBody.query.bool.filter = filterClauses;
+      }
+
+      // If no clauses at all, match all
+      if (mustClauses.length === 0 && filterClauses.length === 0) {
+        queryBody.query = { match_all: {} };
       }
       
       const response = await fetch(`http://localhost:9200/${selectedIndex}/_search`, {
@@ -91,25 +132,7 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from: (currentPage - 1) * PAGE_SIZE,
-          size: PAGE_SIZE,
-          query: {
-            bool: {
-              must: mustClauses
-            }
-          },
-          highlight: {
-            fields: {
-              content: {
-                fragment_size: 150,
-                number_of_fragments: 3,
-                pre_tags: ['<mark>'],
-                post_tags: ['</mark>']
-              }
-            }
-          }
-        })
+        body: JSON.stringify(queryBody)
       });
 
       if (!response.ok) {
@@ -240,6 +263,11 @@
               {result._source.filename}
             </a>
           </div>
+          {#if result._source.coded_tags && result._source.coded_tags.length > 0}
+            <div class="tags-display">
+              <strong>Tags:</strong> {result._source.coded_tags.join(', ')}
+            </div>
+          {/if}
           {#each result.highlight?.content || [] as snippet}
             <p>
               {@html snippet}
@@ -356,6 +384,19 @@
   .result-card h3 {
     margin: 0 0 10px 0;
     font-weight: bold;
+  }
+
+  .tags-display {
+    margin: 10px 0;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .tags-display strong {
+    color: #333;
   }
 
   .result-card p {
