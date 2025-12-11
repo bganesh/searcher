@@ -6,18 +6,45 @@ from elasticsearch.helpers import bulk, BulkIndexError
 
 def extract_coded_tags(text):
     """Extracts coded tags from text (combinations of b,g,m,f with +,/ and keywords)."""
+    import re
     # Pattern for letter combinations with symbols
-    # Matches: pp, Pq, pX+y, P/Q, x+Y/q, etc.
-    pattern = r'\b[mMfFbBgG]+(?:[+/][mMfFbBgG]+)*\b'
-    tags = re.findall(pattern, text)
+    pattern = r'\b(?![mM]+\b)(?:[mMfFbBgG]{2,}|[mMfFbBgG]+[+/][mMfFbBgG]+(?:[+/][mMfFbBgG]+)*)\b'
+    tags = []
+    keywords_set = set()
+    specific_keywords = ['nc', 'inc']
+    # Process each line separately
+    for line in text.split('\n'):
+        # Check for "tags:" or "Tags:" in the line
+        tags_match = re.search(r'\btags:\s*(.+)', line, re.IGNORECASE)
+        if tags_match:
+            # Extract comma-separated tags after "tags:"
+            comma_tags = tags_match.group(1)
+            # Split by comma and strip whitespace
+            comma_separated = [tag.strip() for tag in comma_tags.split(',') if tag.strip()]
+            tags.extend(comma_separated)
+            continue  # Move to next line after processing tags line
+        
+        # Check if this line contains the pattern
+        line_tags = re.findall(pattern, line)
+        if line_tags:
+            # Add the letter combination tags from this line
+            tags.extend(line_tags)
+            # Extract all hyphenated words from this line only
+            words = re.findall(r'\b[\w-]+\b', line)
+            keywords_set.update(words)
+            # Check for specific keywords in this same line
+            line_lower = line.lower()
+            for keyword in specific_keywords:
+                if keyword in line_lower:
+                    # Find all case variations of the keyword in this line
+                    keywords_set.update(re.findall(r'\b' + keyword + r'\b', line, re.IGNORECASE))
     
-    # Add specific keywords
-    keywords = ['nc', 'inc', 'non-cons', 'ncons', 'best', 'beast', 'noncons', 'nonconsensual', 'non-consensual', 'toy', 'dog']
-    for keyword in keywords:
-        if keyword in text.lower():
-            tags.extend(re.findall(r'\b' + keyword + r'\b', text, re.IGNORECASE))
+    # Add keywords to tags list (only if we found pattern matches)
+    if keywords_set:
+        tags.extend(list(keywords_set))
     
-    return list(set(tags))  # Remove duplicates
+    return tags
+
 
 def normalize_tag(tag):
     """Normalizes a tag by removing symbols for fuzzy matching."""
@@ -122,20 +149,29 @@ def index_file(es, index_name, filepath):
             }
         })
 
-    try:
-        bulk(es, actions)
-        click.echo(f"Indexed {len(chunks)} chunks for file: {filename}")
-    except BulkIndexError as e:
-        click.echo(f"Error indexing file {filename}: {e}", err=True)
-
+    # Send in batches of 100 instead of all at once
+    batch_size = 100
+    for i in range(0, len(actions), batch_size):
+        batch = actions[i:i + batch_size]
+        try:
+            bulk(es, batch, request_timeout=60)
+            click.echo(f"Indexed batch {i//batch_size + 1} ({len(batch)} chunks) for file: {filename}")
+        except BulkIndexError as e:
+            click.echo(f"Error indexing batch for file {filename}: {e}", err=True)
+            
 @click.command()
 @click.option('--host', default='http://localhost:9200', help='Elasticsearch host URL')
 @click.argument('index_name', type=str, required=True)
 @click.argument('base_path', type=click.Path(exists=True, file_okay=False, dir_okay=True), required=True)
 def main(host, index_name, base_path):
     """Index text files from BASE_PATH into Elasticsearch under INDEX_NAME."""
-    es = Elasticsearch([host])
-
+    es = Elasticsearch(
+        [host],
+        request_timeout=60,  # Increase request timeout to 60 seconds
+        max_retries=3,
+        retry_on_timeout=True
+    )
+    
     if not es.ping():
         click.echo("Elasticsearch server is not reachable. Please ensure it is running.", err=True)
         return
