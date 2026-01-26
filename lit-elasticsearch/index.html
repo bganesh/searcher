@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elasticsearch Search</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .search-container {
+      margin-bottom: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .tags-container {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .tags-container input[type="text"] {
+      flex: 1;
+    }
+
+    .tags-container label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    select {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      min-width: 200px;
+      max-width: 300px;
+      text-overflow: ellipsis;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:disabled {
+      background: #f0f0f0;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      background: #f0f0f0;
+    }
+
+    .error-message {
+      color: #d32f2f;
+      padding: 10px;
+      margin-bottom: 20px;
+      background-color: #ffebee;
+      border-radius: 4px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .result-card {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+    }
+
+    .result-title a {
+      color: #1976d2;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .result-title a:hover {
+      text-decoration: underline;
+    }
+
+    .tags-display {
+      margin: 10px 0;
+      padding: 8px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .tags-display strong {
+      color: #333;
+    }
+
+    .result-card p {
+      margin: 0 0 10px 0;
+      line-height: 1.4;
+    }
+
+    .pagination {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+    }
+
+    mark {
+      background-color: yellow;
+      padding: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="search-controls"></div>
+    <div id="results"></div>
+    <div id="pagination"></div>
+  </main>
+  <script type="module" src="dist/scripts/main.js"></script>
+</body>
+</html>
