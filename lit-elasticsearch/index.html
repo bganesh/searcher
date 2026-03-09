@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Elasticsearch Search</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -21,6 +19,7 @@
       padding: 20px;
     }
 
+    /* ── Search controls (unchanged) ─────────────────────── */
     .search-container {
       margin-bottom: 10px;
       display: flex;
@@ -34,9 +33,7 @@
       align-items: center;
     }
 
-    .tags-container input[type="text"] {
-      flex: 1;
-    }
+    .tags-container input[type="text"] { flex: 1; }
 
     .tags-container label {
       display: flex;
@@ -63,9 +60,7 @@
       font-size: 16px;
     }
 
-    input[type="checkbox"] {
-      cursor: pointer;
-    }
+    input[type="checkbox"] { cursor: pointer; }
 
     button {
       padding: 8px 16px;
@@ -76,15 +71,10 @@
       font-size: 16px;
     }
 
-    button:disabled {
-      background: #f0f0f0;
-      cursor: not-allowed;
-    }
+    button:disabled { background: #f0f0f0; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #f0f0f0; }
 
-    button:hover:not(:disabled) {
-      background: #f0f0f0;
-    }
-
+    /* ── Feedback ─────────────────────────────────────────── */
     .error-message {
       color: #d32f2f;
       padding: 10px;
@@ -93,16 +83,10 @@
       border-radius: 4px;
     }
 
-    .loading {
-      text-align: center;
-      padding: 20px;
-    }
+    .loading { text-align: center; padding: 20px; }
 
-    .results {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    /* ── Result cards (unchanged) ────────────────────────── */
+    .results { display: flex; flex-direction: column; gap: 20px; }
 
     .result-card {
       border: 1px solid #ddd;
@@ -116,9 +100,7 @@
       font-weight: 600;
     }
 
-    .result-title a:hover {
-      text-decoration: underline;
-    }
+    .result-title a:hover { text-decoration: underline; }
 
     .tags-display {
       margin: 10px 0;
@@ -129,26 +111,75 @@
       color: #555;
     }
 
-    .tags-display strong {
-      color: #333;
+    .tags-display strong { color: #333; }
+
+    .result-card p { margin: 0 0 10px 0; line-height: 1.4; }
+
+    mark { background-color: yellow; padding: 0 2px; }
+
+    /* ── Page sections & sentinels ────────────────────────── */
+    .page-section { position: relative; }
+
+    .page-sentinel-top,
+    .page-sentinel-bottom {
+      height: 1px;
+      background: transparent;
     }
 
-    .result-card p {
-      margin: 0 0 10px 0;
-      line-height: 1.4;
+    /* ── Pagination widget ───────────────────────────────── */
+    #pagination {
+      position: sticky;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(4px);
+      border-top: 1px solid #e0e0e0;
+      padding: 10px 0;
+      margin-top: 20px;
+      z-index: 100;
     }
 
     .pagination {
-      margin-top: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 15px;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
-    mark {
-      background-color: yellow;
-      padding: 0 2px;
+    .pagination button {
+      min-width: 40px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .pagination button:hover { background: #f0f0f0; }
+
+    .pagination button.active {
+      background: #1976d2;
+      color: #fff;
+      border-color: #1976d2;
+      font-weight: 600;
+    }
+
+    .pagination-ellipsis {
+      padding: 6px 4px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .goto-input {
+      width: 70px;
+      padding: 6px 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-left: 8px;
+      /* override the generic input[type=text] flex:1 */
+      flex: 0 0 auto !important;
     }
   </style>
 </head>
@@ -159,5 +190,6 @@
     <div id="pagination"></div>
   </main>
   <script type="module" src="dist/scripts/main.js"></script>
+  <script type="module" src="dist/scripts/observers.js"></script>
 </body>
 </html>

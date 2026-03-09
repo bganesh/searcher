@@ -1,26 +1,69 @@
-import { state } from './state.js';
-import { performSearch } from './fetch.js';
-import { renderAll } from './render.js';
+import { state, clearCache, clearRenderedState, updateRenderedBounds } from './state.js';
+import { fetchPage } from './fetch.js';
+import { renderAll, renderResults, renderPagination } from './render.js';
+import { setupIntersectionObserver, disconnectObservers } from './observers.js';
 
-export async function handleSearch() {
-  state.currentPage = 1;
-  await performSearch();
-  renderAll();
+// ── Core navigation: jump to a specific page ─────────────────
+export async function navigateToPage(pageIndex) {
+  console.log(`[NAVIGATE] Jumping to page ${pageIndex}`);
+
+  disconnectObservers();
+  window.scrollTo(0, 0);
+
+  // Clear only loaded/rendered state; keep form inputs and index list
+  state.loadedPages.clear();
+  state.inFlight.clear();
+  state.minLoadedPage = null;
+  state.maxLoadedPage = null;
+  clearRenderedState();
+
+  state.activePage = pageIndex;
+  state.isLoading = true;
+  state.errorMessage = '';
+  renderAll(); // show loading state immediately
+
+  try {
+    await fetchPage(pageIndex);
+    updateRenderedBounds(pageIndex);
+    state.isLoading = false;
+    renderAll();
+    setupIntersectionObserver();
+  } catch (err) {
+    console.error(`[NAVIGATE] Error:`, err);
+    state.isLoading = false;
+    state.errorMessage = `Search failed: ${err.message}`;
+    renderAll();
+  }
 }
 
-export async function handlePageChange(newPage) {
-  if (newPage >= 1 && newPage <= state.totalPages) {
-    state.currentPage = newPage;
-    await performSearch();
+// ── Called when user hits Search button or Enter ─────────────
+export async function handleSearch() {
+  if (!state.searchInput.trim() && !state.tagsInput.trim()) {
+    state.errorMessage = 'Please enter a search term or tag';
     renderAll();
-    window.scrollTo(0, 0);
+    return;
+  }
+  clearCache();
+  await navigateToPage(1);
+}
+
+// ── Existing handlers (kept for compatibility) ───────────────
+export async function handlePageChange(newPage) {
+  if (newPage >= 1 && (state.totalPages === null || newPage <= state.totalPages)) {
+    await navigateToPage(newPage);
   }
 }
 
 export async function handleIndexChange() {
-  await handleSearch();
+  if (state.searchInput.trim() || state.tagsInput.trim()) {
+    clearCache();
+    await navigateToPage(1);
+  }
 }
 
 export async function handleExactTagsChange() {
-  await handleSearch();
+  if (state.searchInput.trim() || state.tagsInput.trim()) {
+    clearCache();
+    await navigateToPage(1);
+  }
 }
