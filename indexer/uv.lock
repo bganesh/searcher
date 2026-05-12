@@ -25,14 +25,14 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.3.1"
+version = "8.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/63/f9e1ea081ce35720d8b92acde70daaedace594dc93b693c869e0d5910718/click-8.3.3.tar.gz", hash = "sha256:398329ad4837b2ff7cbe1dd166a4c0f8900c3ca3a218de04466f38f6497f18a2", size = 328061, upload-time = "2026-04-22T15:11:27.506Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/78/01c019cdb5d6498122777c1a43056ebb3ebfeef2076d9d026bfe15583b2b/click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6", size = 108274, upload-time = "2025-11-15T20:45:41.139Z" },
+    { url = "https://files.pythonhosted.org/packages/ae/44/c1221527f6a71a01ec6fbad7fa78f1d50dfa02217385cf0fa3eec7087d59/click-8.3.3-py3-none-any.whl", hash = "sha256:a2bf429bb3033c89fa4936ffb35d5cb471e3719e1f3c8a7c3fff0b8314305613", size = 110502, upload-time = "2026-04-22T15:11:25.044Z" },
 ]
 
 [[package]]
@@ -60,7 +60,7 @@ wheels = [
 
 [[package]]
 name = "elasticsearch"
-version = "9.2.1"
+version = "9.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -69,9 +69,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/6c/67bb17ca0035b0cac4cfbbe64e18d120203fef22da66dd4c636563a0ea63/elasticsearch-9.2.1.tar.gz", hash = "sha256:97f473418e8976611349757287ac982acf12f4e305182863d985d5a031c36830", size = 878062, upload-time = "2025-12-23T14:37:31.694Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/2d/413775b172c6983c7cdbbdc3ac2be71eb00679510a536081801b387a2c8c/elasticsearch-9.4.0.tar.gz", hash = "sha256:95e38e130b1d01438b19343dfa0458e1857a7df8e2e30cbf23a72182b03f05ff", size = 907191, upload-time = "2026-05-06T11:12:51.996Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/d5/84264c29ec67f2f8129676ce11f05defb52f44e97e5f411db9a220f2aa43/elasticsearch-9.2.1-py3-none-any.whl", hash = "sha256:8665f5a0b4d29a7c2772851c05ea8a09279abb7928b7d727524613bd61d75958", size = 963593, upload-time = "2025-12-23T14:37:28.047Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/a1/193be12421e0db8e786c1592b449f9cadef240970d391bf94b7bb07ca195/elasticsearch-9.4.0-py3-none-any.whl", hash = "sha256:e20095ba40229f4562f7cc951883c7c62a017435f94dbe0c21526f58ba411885", size = 992735, upload-time = "2026-05-06T11:12:48.267Z" },
 ]
 
 [[package]]
