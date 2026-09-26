@@ -83,7 +83,7 @@ export async function fetchPage(pageIndex) {
 
   console.log(`[FETCH] Page ${pageIndex} (from=${from}, size=${size})`);
 
-  const fetchPromise = fetch(`${ELASTIC_URL}/${state.selectedIndex}/_search`, {
+  const fetchPromise = fetch(`${ELASTIC_URL}/${state.selectedIndex}/_search?search_type=dfs_query_then_fetch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(queryBody)
