@@ -101,7 +101,7 @@ export function renderResults() {
             <div class="result-card">
               <div class="result-title">
                 <a
-                  href=${'http://localhost:3144/' + result._source.filepath}
+                  href=${window.location.origin + '/' + result._source.filepath}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
